@@ -15,7 +15,6 @@
  */
 package com.licel.jcardsim.crypto;
 
-import java.lang.reflect.Field;
 import javacard.framework.JCSystem;
 import javacard.framework.Util;
 import javacard.security.CryptoException;
@@ -25,18 +24,14 @@ import javacard.security.SignatureMessageRecovery;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.Signer;
 import org.bouncycastle.crypto.SignerWithRecovery;
-import org.bouncycastle.crypto.digests.MD5Digest;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-import org.bouncycastle.crypto.digests.SHA1Digest;
-import org.bouncycastle.crypto.digests.SHA224Digest;
-import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.crypto.digests.SHA384Digest;
-import org.bouncycastle.crypto.digests.SHA512Digest;
+import org.bouncycastle.crypto.digests.*;
 import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.signers.DSADigestSigner;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.ISO9796d2Signer;
 import org.bouncycastle.crypto.signers.RSADigestSigner;
+
+import java.lang.reflect.Field;
 
 /*
  * Implementation <code>Signature</code> with asymmetric keys based
@@ -46,6 +41,7 @@ import org.bouncycastle.crypto.signers.RSADigestSigner;
 public class AsymmetricSignatureImpl extends Signature implements SignatureMessageRecovery{
 
     Signer engine;
+    NullableDigest digest;
     Key key;
     byte algorithm;
     boolean isInitialized;
@@ -57,50 +53,65 @@ public class AsymmetricSignatureImpl extends Signature implements SignatureMessa
         isRecovery = false;
         switch (algorithm) {
             case ALG_RSA_SHA_ISO9796:
-                engine = new ISO9796d2Signer(new RSAEngine(), new SHA1Digest());
+                digest = new NullableDigest(new SHA1Digest());
+                engine = new ISO9796d2Signer(new RSAEngine(), digest);
                 break;
-            case ALG_RSA_SHA_ISO9796_MR:    
-                engine = new ISO9796d2Signer(new RSAEngine(), new SHA1Digest());
+            case ALG_RSA_SHA_ISO9796_MR:
+                digest = new NullableDigest(new SHA1Digest());
+                engine = new ISO9796d2Signer(new RSAEngine(), digest);
                 isRecovery = true;
                 break;
             case ALG_RSA_SHA_PKCS1:
-                engine = new RSADigestSigner(new SHA1Digest());
+                digest = new NullableDigest(new SHA1Digest());
+                engine = new RSADigestSigner(digest);
                 break;
             case ALG_RSA_SHA_224_PKCS1:
-                engine = new RSADigestSigner(new SHA224Digest());
+                digest = new NullableDigest(new SHA224Digest());
+                engine = new RSADigestSigner(digest);
                 break;
             case ALG_RSA_SHA_256_PKCS1:
-                engine = new RSADigestSigner(new SHA256Digest());
+                digest = new NullableDigest(new SHA256Digest());
+                engine = new RSADigestSigner(digest);
                 break;
             case ALG_RSA_SHA_384_PKCS1:
-                engine = new RSADigestSigner(new SHA384Digest());
+                digest = new NullableDigest(new SHA384Digest());
+                engine = new RSADigestSigner(digest);
                 break;
             case ALG_RSA_SHA_512_PKCS1:
-                engine = new RSADigestSigner(new SHA512Digest());
+                digest = new NullableDigest(new SHA512Digest());
+                engine = new RSADigestSigner(digest);
                 break;
             case ALG_RSA_MD5_PKCS1:
-                engine = new RSADigestSigner(new MD5Digest());
+                digest = new NullableDigest(new MD5Digest());
+                engine = new RSADigestSigner(digest);
                 break;
             case ALG_RSA_RIPEMD160_ISO9796:
-                engine = new ISO9796d2Signer(new RSAEngine(), new RIPEMD160Digest());
+                digest = new NullableDigest(new RIPEMD160Digest());
+                engine = new ISO9796d2Signer(new RSAEngine(), digest);
                 break;
             case ALG_RSA_RIPEMD160_PKCS1:
-                engine = new RSADigestSigner(new RIPEMD160Digest());
+                digest = new NullableDigest(new RIPEMD160Digest());
+                engine = new RSADigestSigner(digest);
                 break;
             case ALG_ECDSA_SHA:
-                engine = new DSADigestSigner(new ECDSASigner(), new SHA1Digest());
+                digest = new NullableDigest(new SHA1Digest());
+                engine = new DSADigestSigner(new ECDSASigner(), digest);
                 break;
             case ALG_ECDSA_SHA_224:
-                engine = new DSADigestSigner(new ECDSASigner(), new SHA224Digest());
+                digest = new NullableDigest(new SHA224Digest());
+                engine = new DSADigestSigner(new ECDSASigner(), digest);
                 break;
             case ALG_ECDSA_SHA_256:
-                engine = new DSADigestSigner(new ECDSASigner(), new SHA256Digest());
+                digest = new NullableDigest(new SHA256Digest());
+                engine = new DSADigestSigner(new ECDSASigner(), digest);
                 break;
             case ALG_ECDSA_SHA_384:
-                engine = new DSADigestSigner(new ECDSASigner(), new SHA384Digest());
+                digest = new NullableDigest(new SHA384Digest());
+                engine = new DSADigestSigner(new ECDSASigner(), digest);
                 break;
             case ALG_ECDSA_SHA_512:
-                engine = new DSADigestSigner(new ECDSASigner(), new SHA512Digest());
+                digest = new NullableDigest(new SHA512Digest());
+                engine = new DSADigestSigner(new ECDSASigner(), digest);
                 break;
         }
     }
@@ -278,12 +289,19 @@ public class AsymmetricSignatureImpl extends Signature implements SignatureMessa
         throw new UnsupportedOperationException("Not supported yet."); 
     }
 
-    public short signPreComputedHash(byte[] bytes, short s, short s1, byte[] bytes1, short s2) throws CryptoException {
-        throw new UnsupportedOperationException("Not supported yet."); 
+    public short signPreComputedHash(byte[] inBuff, short inOffset, short inLength, byte[] sigBuff, short sigOffset) throws CryptoException {
+        digest.setNulled(true);
+        short res = sign(inBuff, inOffset, inLength, sigBuff, sigOffset);
+        digest.setNulled(false);
+        return res;
     }
-    public boolean verifyPreComputedHash(byte[] bytes, short s, short s1, byte[] bytes1, short s2, short s3) throws CryptoException {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public boolean verifyPreComputedHash(byte[] inBuff, short inOffset, short inLength, byte[] sigBuff, short sigOffset, short sigLength) throws CryptoException {
+        digest.setNulled(true);
+        boolean res = verify(inBuff, inOffset, inLength, sigBuff, sigOffset, sigLength);
+        digest.setNulled(false);
+        return res;
     }
+
     public byte getPaddingAlgorithm() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
