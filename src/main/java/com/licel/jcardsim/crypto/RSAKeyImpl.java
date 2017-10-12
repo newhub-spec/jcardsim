@@ -15,8 +15,6 @@
  */
 package com.licel.jcardsim.crypto;
 
-import java.math.BigInteger;
-import java.security.SecureRandom;
 import javacard.security.CryptoException;
 import javacard.security.KeyBuilder;
 import javacard.security.RSAPrivateKey;
@@ -25,6 +23,9 @@ import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.KeyGenerationParameters;
 import org.bouncycastle.crypto.params.RSAKeyGenerationParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
+
+import java.math.BigInteger;
+import java.security.SecureRandom;
 
 /**
  * Implementation
@@ -80,10 +81,12 @@ public class RSAKeyImpl extends KeyImpl implements RSAPrivateKey, RSAPublicKey {
     }
 
     public void setExponent(byte[] buffer, short offset, short length) throws CryptoException {
+        exponent = new ByteContainer();
         exponent.setBytes(buffer, offset, length);
     }
 
     public void setModulus(byte[] buffer, short offset, short length) throws CryptoException {
+        modulus = new ByteContainer();
         modulus.setBytes(buffer, offset, length);
     }
 
