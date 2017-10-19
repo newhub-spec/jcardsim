@@ -48,6 +48,9 @@ public class KeyAgreementImpl extends KeyAgreement {
             case ALG_EC_SVDP_DH_PLAIN:
                 engine = new ECDHBasicAgreement();
                 break;
+            case ALG_EC_SVDP_DH_PLAIN_XY:
+                engine = new ECDHBasicAgreementXY();
+                break;
             case ALG_EC_SVDP_DHC: // no break
             case ALG_EC_SVDP_DHC_PLAIN:
                 engine = new ECDHCBasicAgreement();
@@ -84,16 +87,21 @@ public class KeyAgreementImpl extends KeyAgreement {
         ECPublicKeyParameters ecp = new ECPublicKeyParameters(
                 ((ECPrivateKeyParameters) privateKey.getParameters()).getParameters().getCurve().decodePoint(publicKey), ((ECPrivateKeyParameters) privateKey.getParameters()).getParameters());
         byte[] num = engine.calculateAgreement(ecp).toByteArray();
+        byte[] result;
 
-        // truncate/zero-pad to field size as per the spec:
-        int fieldSize = privateKey.getDomainParameters().getCurve().getFieldSize();
-        byte[] result = new byte[(fieldSize + 7) / 8];
-        int numBytes = Math.min(num.length, result.length);
-        Util.arrayCopyNonAtomic(
-                num,    (short)(   num.length - numBytes),
-                result, (short)(result.length - numBytes),
-                (short)numBytes);
-        Util.arrayFillNonAtomic(result, (short)0, (short)(result.length - numBytes), (byte)0);
+        if (this.algorithm != ALG_EC_SVDP_DH_PLAIN_XY) {
+            // truncate/zero-pad to field size as per the spec:
+            int fieldSize = privateKey.getDomainParameters().getCurve().getFieldSize();
+            result = new byte[(fieldSize + 7) / 8];
+            int numBytes = Math.min(num.length, result.length);
+            Util.arrayCopyNonAtomic(
+                num, (short) (num.length - numBytes),
+                result, (short) (result.length - numBytes),
+                (short) numBytes);
+            Util.arrayFillNonAtomic(result, (short) 0, (short) (result.length - numBytes), (byte) 0);
+        } else {
+            result = num;
+        }
 
         // post-process output key based on agreement type
         switch (this.algorithm) {
@@ -107,6 +115,7 @@ public class KeyAgreementImpl extends KeyAgreement {
                 return (short) hashResult.length;
             case ALG_EC_SVDP_DHC_PLAIN: // no break
             case ALG_EC_SVDP_DH_PLAIN:
+            case ALG_EC_SVDP_DH_PLAIN_XY:
                 // plain output
                 Util.arrayCopyNonAtomic(result, (short) 0, secret, secretOffset, (short) result.length);
                 return (short) result.length;
