@@ -28,6 +28,8 @@ import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.paddings.ZeroBytePadding;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
+import java.util.Arrays;
+
 /**
  * Implementation <code>Cipher</code> with symmetric keys based
  * on BouncyCastle CryptoAPI.
@@ -82,7 +84,10 @@ public class SymmetricCipherImpl extends Cipher {
             CryptoException.throwIt(CryptoException.INVALID_INIT);
         }
 
-        short processedBytes = (short) engine.processBytes(inBuff, inOffset, inLength, outBuff, outOffset);
+        byte[] tmpInput = new byte[inLength];
+        System.arraycopy(inBuff, inOffset, tmpInput, 0, inLength);
+
+        short processedBytes = (short) engine.processBytes(tmpInput, 0, tmpInput.length, outBuff, outOffset);
         try {
             return (short) (engine.doFinal(outBuff, outOffset + processedBytes) + processedBytes);
         } catch (Exception ex) {

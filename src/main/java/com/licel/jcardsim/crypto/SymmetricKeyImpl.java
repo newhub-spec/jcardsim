@@ -65,6 +65,9 @@ public class SymmetricKeyImpl extends KeyImpl implements DESKey, AESKey, HMACKey
                 key = new ByteContainer(JCSystem.MEMORY_TYPE_PERSISTENT);
                 break;
         }
+
+        // Make sure key is created of the appropriate size
+        key.setBytes(new byte[this.size/8]);
     }
 
     /**
