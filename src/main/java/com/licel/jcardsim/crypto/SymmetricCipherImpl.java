@@ -84,10 +84,7 @@ public class SymmetricCipherImpl extends Cipher {
             CryptoException.throwIt(CryptoException.INVALID_INIT);
         }
 
-        byte[] tmpInput = new byte[inLength];
-        System.arraycopy(inBuff, inOffset, tmpInput, 0, inLength);
-
-        short processedBytes = (short) engine.processBytes(tmpInput, 0, tmpInput.length, outBuff, outOffset);
+        short processedBytes = (short) engine.processBytes(inBuff, inOffset, inLength, outBuff, outOffset);
         try {
             return (short) (engine.doFinal(outBuff, outOffset + processedBytes) + processedBytes);
         } catch (Exception ex) {
@@ -123,6 +120,7 @@ public class SymmetricCipherImpl extends Cipher {
                 engine = new PaddedBufferedBlockCipher(new CBCBlockCipher(key.getCipher()), new ZeroBytePadding());
                 break;
             case ALG_DES_CBC_ISO9797_M2:
+            case ALG_AES_CBC_ISO9797_M2:
                 engine = new PaddedBufferedBlockCipher(new CBCBlockCipher(key.getCipher()), new ISO7816d4Padding());
                 break;
             case ALG_DES_CBC_PKCS5:
@@ -140,9 +138,6 @@ public class SymmetricCipherImpl extends Cipher {
                 break;
             case ALG_DES_ECB_PKCS5:
                 engine = new PaddedBufferedBlockCipher(key.getCipher(), new PKCS7Padding());
-                break;
-            case ALG_AES_CBC_ISO9797_M2:
-                engine = new PaddedBufferedBlockCipher(new CBCBlockCipher(key.getCipher()), new ISO7816d4Padding());
                 break;
             default:
                 CryptoException.throwIt(CryptoException.NO_SUCH_ALGORITHM);
